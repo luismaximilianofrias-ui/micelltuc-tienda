@@ -466,7 +466,7 @@ footer{background:var(--ink);color:#fff;padding:64px 0 28px;margin-top:40px}
     <div class="sec-head reveal">
       <div><h2>Categorías</h2><p>Encontrá justo lo que tu celular necesita</p></div>
     </div>
-    <div class="cat-grid reveal" id="catGrid"></div>
+    <div class="cat-grid" id="catGrid"></div>
   </div>
 </section>
 
@@ -504,7 +504,7 @@ footer{background:var(--ink);color:#fff;padding:64px 0 28px;margin-top:40px}
             </select>
           </div>
         </div>
-        <div class="grid reveal" id="productGrid"></div>
+        <div class="grid" id="productGrid"></div>
       </div>
     </div>
   </div>
@@ -917,6 +917,7 @@ footer{background:var(--ink);color:#fff;padding:64px 0 28px;margin-top:40px}
       entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); obs.unobserve(e.target); } });
     }, {threshold:.12});
     items.forEach(function(i){ obs.observe(i); });
+    setTimeout(function(){ items.forEach(function(i){ i.classList.add("in"); }); }, 1500);
   }
 
   /* ---------- header scroll ---------- */
