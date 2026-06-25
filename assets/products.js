@@ -7,6 +7,8 @@
   var ORDERS_KEY = "micell_orders";
   var ANALYTICS_KEY = "micell_analytics";
   var SEED_KEY = "micell_seeded_v1";
+  var SETTINGS_KEY = "micell_settings";
+  var DEFAULT_SETTINGS = { priceFilterMin: 4000, priceFilterMax: 60000 };
 
   var CATEGORIES = [
     { id: "fundas", name: "Fundas y Carcasas", icon: "case" },
@@ -192,6 +194,9 @@
       if (product) a.revenueByDay[dateKey] = (a.revenueByDay[dateKey] || 0) + product.price * qty;
       this.saveAnalytics(a);
     },
+
+    getSettings: function () { return Object.assign({}, DEFAULT_SETTINGS, read(SETTINGS_KEY, {})); },
+    saveSettings: function (s) { write(SETTINGS_KEY, s); },
 
     getOrders: function () { return read(ORDERS_KEY, []); },
     addOrder: function (order) {
