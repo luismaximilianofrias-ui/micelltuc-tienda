@@ -130,6 +130,14 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 .empty-row td{text-align:center;color:var(--muted);padding:48px}
 
 /* ===== MODAL (product form) ===== */
+#lockScreen{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+#lockScreen.hidden{display:none}
+.lock-box{width:100%;max-width:340px;text-align:center}
+.lock-box .brand{justify-content:center;padding:0 0 22px}
+.lock-box h2{font-size:17px;font-weight:800;margin-bottom:6px}
+.lock-box p.sub{font-size:12.5px;color:var(--muted);margin-bottom:22px}
+.lock-box .field{text-align:left}
+#lockError{color:var(--red);font-size:12px;margin-top:10px;min-height:14px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .2s}
 .modal-overlay.open{opacity:1;visibility:visible}
 .modal{background:var(--card);border:1px solid var(--border);border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:28px;transform:scale(.95);transition:transform .22s}
@@ -169,6 +177,19 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 </head>
 <body>
 
+<div id="lockScreen">
+  <div class="lock-box">
+    <div class="brand"><span class="brand-badge">MC</span><span class="brand-text">MI <span>CELL</span></span></div>
+    <h2>Acceso al panel</h2>
+    <p class="sub">Ingresá la contraseña para administrar la tienda.</p>
+    <form id="lockForm">
+      <div class="field"><input type="password" id="lockPassword" autocomplete="current-password" placeholder="Contraseña"></div>
+      <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      <div id="lockError"></div>
+    </form>
+  </div>
+</div>
+
 <div class="overlay-mobile" id="sidebarOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;display:none"></div>
 
 <aside id="sidebar">
@@ -186,6 +207,10 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
     Pedidos
   </div>
+  <div class="nav-item" data-view="ajustes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.37a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.63 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.63a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.37 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+    Ajustes
+  </div>
   <div class="nav-label">General</div>
   <a class="nav-item" href="index.html" target="_blank">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
@@ -195,6 +220,10 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <div class="nav-item" id="resetDataBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
       Reiniciar datos demo
+    </div>
+    <div class="nav-item" id="logoutBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      Cerrar sesión
     </div>
   </div>
 </aside>
@@ -316,6 +345,19 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
       </div>
     </section>
 
+    <section class="view" id="view-ajustes">
+      <div class="panel" style="max-width:480px">
+        <div class="panel-head"><h3>Filtro de precio de la tienda</h3></div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:18px">Definí el rango del control deslizante de precio que ven los clientes en los filtros del catálogo.</p>
+        <div class="field-row">
+          <div class="field"><label>Precio mínimo</label><input type="number" id="fSettingsMin"></div>
+          <div class="field"><label>Precio máximo</label><input type="number" id="fSettingsMax"></div>
+        </div>
+        <button class="btn btn-primary" id="saveSettingsBtn">Guardar cambios</button>
+        <span id="settingsSaved" style="margin-left:10px;font-size:12.5px;color:var(--green);opacity:0;transition:opacity .3s">Guardado</span>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -334,6 +376,28 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   var Store = window.MiCellStore;
   var Icons = window.MiCellIcons;
 
+  /* ---------- access lock ---------- */
+  var ADMIN_PASSWORD = "micell2026";
+  if(localStorage.getItem("micell_admin_auth")==="1"){
+    document.getElementById("lockScreen").classList.add("hidden");
+  }
+  document.getElementById("lockForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var val = document.getElementById("lockPassword").value;
+    if(val === ADMIN_PASSWORD){
+      localStorage.setItem("micell_admin_auth","1");
+      document.getElementById("lockScreen").classList.add("hidden");
+    } else {
+      document.getElementById("lockError").textContent = "Contraseña incorrecta";
+      document.getElementById("lockPassword").value = "";
+      document.getElementById("lockPassword").focus();
+    }
+  });
+  document.getElementById("logoutBtn").addEventListener("click", function(){
+    localStorage.removeItem("micell_admin_auth");
+    location.reload();
+  });
+
   function money(n){ return "$" + Math.round(n).toLocaleString("es-AR"); }
   function dateLabel(iso){ var d = new Date(iso); return d.toLocaleDateString("es-AR",{day:"2-digit",month:"short"}); }
 
@@ -343,7 +407,8 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   var titles = {
     dashboard: ["Resumen","Visión general de la tienda"],
     productos: ["Productos","Gestioná tu catálogo de accesorios"],
-    pedidos: ["Pedidos","Historial completo de pedidos recibidos"]
+    pedidos: ["Pedidos","Historial completo de pedidos recibidos"],
+    ajustes: ["Ajustes","Configuración general de la tienda"]
   };
   function switchView(name){
     document.querySelectorAll(".view").forEach(function(v){ v.classList.remove("active"); });
@@ -355,6 +420,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     if(name==="dashboard") renderDashboard();
     if(name==="productos") renderProductsTable();
     if(name==="pedidos") renderAllOrders();
+    if(name==="ajustes") renderSettings();
   }
   document.querySelectorAll(".nav-item[data-view]").forEach(function(n){
     n.addEventListener("click", function(){ switchView(n.getAttribute("data-view")); });
@@ -526,7 +592,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
       var sold = a.sold[p.id] || 0;
       var low = p.stock <= 10;
       return '<tr data-id="'+p.id+'">'+
-        '<td><div class="prow-name"><div class="prow-ic">'+Icons.svgFor(c.icon,p.palette)+'</div><div><div class="prow-title">'+p.name+'</div><div class="prow-model">'+p.model+'</div></div></div></td>'+
+        '<td><div class="prow-name"><div class="prow-ic">'+(p.image?'<img src="'+p.image+'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">':Icons.svgFor(c.icon,p.palette))+'</div><div><div class="prow-title">'+p.name+'</div><div class="prow-model">'+p.model+'</div></div></div></td>'+
         '<td><span class="cat-tag">'+c.name+'</span></td>'+
         '<td><b>'+money(p.price)+'</b>'+(p.oldPrice?'<br><span style="text-decoration:line-through;color:var(--muted);font-size:11px">'+money(p.oldPrice)+'</span>':'')+'</td>'+
         '<td data-label="Stock">'+p.stock+' unid.</td>'+
@@ -555,8 +621,14 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     var editing = !!id;
     var p = editing ? Store.getProduct(id) : { name:"", model:"", category:Store.CATEGORIES[0].id, price:0, oldPrice:"", stock:0, badge:"", rating:4.5, palette:0, desc:"" };
     var box = document.getElementById("productModalBox");
+    var pendingImage = p.image || null;
     box.innerHTML =
       '<h3>'+(editing?"Editar producto":"Nuevo producto")+'</h3>'+
+      '<div class="field"><label>Foto del producto</label>'+
+        '<div id="fImagePreview" style="width:84px;height:84px;border-radius:12px;overflow:hidden;background:var(--surface);border:1px solid var(--border);margin-bottom:10px">'+(pendingImage?'<img src="'+pendingImage+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>'+
+        '<input type="file" id="fImageInput" accept="image/*">'+
+        '<button type="button" class="btn btn-ghost btn-sm" id="fImageRemove" style="margin-top:8px;'+(pendingImage?'':'display:none')+'">Quitar foto</button>'+
+      '</div>'+
       '<div class="field"><label>Nombre</label><input type="text" id="fName" value="'+(p.name||"").replace(/"/g,"&quot;")+'"></div>'+
       '<div class="field-row">'+
         '<div class="field"><label>Modelo / variante</label><input type="text" id="fModel" value="'+(p.model||"").replace(/"/g,"&quot;")+'"></div>'+
@@ -581,6 +653,23 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
         '<button class="btn btn-primary btn-block" id="saveProductBtn">'+(editing?"Guardar cambios":"Crear producto")+'</button>'+
       '</div>';
     box.querySelector("#cancelProductBtn").addEventListener("click", closeProductModal);
+    box.querySelector("#fImageInput").addEventListener("change", function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        pendingImage = reader.result;
+        box.querySelector("#fImagePreview").innerHTML = '<img src="'+pendingImage+'" style="width:100%;height:100%;object-fit:cover">';
+        box.querySelector("#fImageRemove").style.display = "inline-flex";
+      };
+      reader.readAsDataURL(file);
+    });
+    box.querySelector("#fImageRemove").addEventListener("click", function(){
+      pendingImage = null;
+      box.querySelector("#fImagePreview").innerHTML = "";
+      box.querySelector("#fImageInput").value = "";
+      box.querySelector("#fImageRemove").style.display = "none";
+    });
     box.querySelector("#saveProductBtn").addEventListener("click", function(){
       var name = box.querySelector("#fName").value.trim();
       if(!name){ box.querySelector("#fName").style.borderColor = "var(--red)"; return; }
@@ -594,7 +683,8 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
         badge: box.querySelector("#fBadge").value || null,
         desc: box.querySelector("#fDesc").value.trim(),
         rating: p.rating || 4.5,
-        palette: p.palette != null ? p.palette : Math.floor(Math.random()*5)
+        palette: p.palette != null ? p.palette : Math.floor(Math.random()*5),
+        image: pendingImage
       };
       if(editing) Store.updateProduct(id, patch); else Store.addProduct(patch);
       closeProductModal();
@@ -629,6 +719,24 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   }
   function closeConfirmModal(){ document.getElementById("confirmModalOverlay").classList.remove("open"); }
   document.getElementById("confirmModalOverlay").addEventListener("click", function(e){ if(e.target===this) closeConfirmModal(); });
+
+  /* ---------- settings ---------- */
+  function renderSettings(){
+    var s = Store.getSettings();
+    document.getElementById("fSettingsMin").value = s.priceFilterMin;
+    document.getElementById("fSettingsMax").value = s.priceFilterMax;
+  }
+  document.getElementById("saveSettingsBtn").addEventListener("click", function(){
+    var min = parseInt(document.getElementById("fSettingsMin").value,10) || 0;
+    var max = parseInt(document.getElementById("fSettingsMax").value,10) || 0;
+    if(max <= min) max = min + 1000;
+    document.getElementById("fSettingsMin").value = min;
+    document.getElementById("fSettingsMax").value = max;
+    Store.saveSettings({ priceFilterMin: min, priceFilterMax: max });
+    var saved = document.getElementById("settingsSaved");
+    saved.style.opacity = "1";
+    setTimeout(function(){ saved.style.opacity = "0"; }, 1800);
+  });
 
   /* ---------- reset demo data ---------- */
   document.getElementById("resetDataBtn").addEventListener("click", function(){
