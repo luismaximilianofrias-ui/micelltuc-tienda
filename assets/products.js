@@ -9,6 +9,27 @@
   var SEED_KEY = "micell_seeded_v1";
   var SETTINGS_KEY = "micell_settings";
   var DEFAULT_SETTINGS = { priceFilterMin: 4000, priceFilterMax: 60000 };
+  var SETTINGS_ROW_ID = "global";
+
+  /* ---------- Supabase (base de datos compartida) ---------- */
+  /* Completar con los datos del proyecto de Supabase para activar la base de datos.
+     Si quedan vacíos, la tienda sigue funcionando con localStorage como antes. */
+  var SUPABASE_URL = "https://xzmsqduqdhdthzvcwoic.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_h_qIPL8O94grcy8hwntzMQ_niefQYkO";
+  var SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+  function sbHeaders(extra) {
+    var h = { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json" };
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  function sbRest(path) { return SUPABASE_URL + "/rest/v1/" + path; }
+  function rowToProduct(r) {
+    return { id: r.id, name: r.name, model: r.model, category: r.category, price: r.price, oldPrice: r.old_price, stock: r.stock, badge: r.badge, rating: r.rating, palette: r.palette, desc: r.description, image: r.image };
+  }
+  function productToRow(p) {
+    return { id: p.id, name: p.name, model: p.model || null, category: p.category, price: p.price, old_price: p.oldPrice || null, stock: p.stock, badge: p.badge || null, rating: p.rating != null ? p.rating : 4.5, palette: p.palette != null ? p.palette : 0, description: p.desc || null, image: p.image || null };
+  }
 
   var CATEGORIES = [
     { id: "fundas", name: "Fundas y Carcasas", icon: "case" },
@@ -102,16 +123,55 @@
     write(SEED_KEY, true);
   }
 
-  seedHistory();
+  var productsCache = null;
+  var settingsCache = null;
+
+  function loadLocalFallback() {
+    seedHistory();
+    productsCache = read(PRODUCTS_KEY, clone(DEFAULT_PRODUCTS));
+    settingsCache = Object.assign({}, DEFAULT_SETTINGS, read(SETTINGS_KEY, {}));
+  }
+
+  function loadFromSupabase() {
+    return fetch(sbRest("products?select=*"), { headers: sbHeaders() })
+      .then(function (res) { if (!res.ok) throw new Error("No se pudieron leer los productos"); return res.json(); })
+      .then(function (rows) {
+        if (rows.length > 0) return rows;
+        var seedRows = DEFAULT_PRODUCTS.map(productToRow);
+        return fetch(sbRest("products"), { method: "POST", headers: sbHeaders({ Prefer: "return=representation" }), body: JSON.stringify(seedRows) })
+          .then(function (res) { if (!res.ok) throw new Error("No se pudo sembrar el catálogo"); return res.json(); });
+      })
+      .then(function (rows) { productsCache = rows.map(rowToProduct); })
+      .then(function () { return fetch(sbRest("settings?id=eq." + SETTINGS_ROW_ID + "&select=*"), { headers: sbHeaders() }); })
+      .then(function (res) { if (!res.ok) throw new Error("No se pudieron leer los ajustes"); return res.json(); })
+      .then(function (rows) {
+        if (rows.length > 0) return rows;
+        var row = { id: SETTINGS_ROW_ID, value: DEFAULT_SETTINGS };
+        return fetch(sbRest("settings"), { method: "POST", headers: sbHeaders({ Prefer: "return=representation" }), body: JSON.stringify(row) })
+          .then(function (res) { if (!res.ok) throw new Error("No se pudieron crear los ajustes"); return res.json(); });
+      })
+      .then(function (rows) { settingsCache = Object.assign({}, DEFAULT_SETTINGS, rows[0].value); })
+      .then(function () { seedHistory(); });
+  }
+
+  var readyPromise = SUPABASE_ENABLED
+    ? loadFromSupabase().catch(function (e) {
+        console.error("Supabase no disponible, usando almacenamiento local:", e);
+        loadLocalFallback();
+      })
+    : Promise.resolve().then(loadLocalFallback);
 
   var Store = {
     CATEGORIES: CATEGORIES,
     categoryById: cat,
 
+    ready: function () { return readyPromise; },
+
     getProducts: function () {
-      return read(PRODUCTS_KEY, clone(DEFAULT_PRODUCTS));
+      return productsCache || [];
     },
     saveProducts: function (list) {
+      productsCache = list;
       write(PRODUCTS_KEY, list);
     },
     getProduct: function (id) {
@@ -120,22 +180,47 @@
       return null;
     },
     addProduct: function (p) {
-      var list = this.getProducts();
       p.id = "p" + Date.now().toString(36);
+      var list = this.getProducts();
       list.unshift(p);
       this.saveProducts(list);
+      if (SUPABASE_ENABLED) {
+        fetch(sbRest("products"), { method: "POST", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify([productToRow(p)]) })
+          .catch(function (e) { console.error("No se pudo guardar el producto en la base de datos:", e); });
+      }
       return p;
     },
     updateProduct: function (id, patch) {
       var list = this.getProducts();
+      var updated = null;
       for (var i = 0; i < list.length; i++) {
-        if (list[i].id === id) { list[i] = Object.assign({}, list[i], patch); break; }
+        if (list[i].id === id) { list[i] = Object.assign({}, list[i], patch); updated = list[i]; break; }
       }
       this.saveProducts(list);
+      if (SUPABASE_ENABLED && updated) {
+        fetch(sbRest("products?id=eq." + encodeURIComponent(id)), { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify(productToRow(updated)) })
+          .catch(function (e) { console.error("No se pudo actualizar el producto en la base de datos:", e); });
+      }
     },
     deleteProduct: function (id) {
       var list = this.getProducts().filter(function (p) { return p.id !== id; });
       this.saveProducts(list);
+      if (SUPABASE_ENABLED) {
+        fetch(sbRest("products?id=eq." + encodeURIComponent(id)), { method: "DELETE", headers: sbHeaders() })
+          .catch(function (e) { console.error("No se pudo eliminar el producto en la base de datos:", e); });
+      }
+    },
+    uploadProductImage: function (file) {
+      if (!SUPABASE_ENABLED) return Promise.resolve(null);
+      var path = Date.now().toString(36) + "-" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      return fetch(SUPABASE_URL + "/storage/v1/object/product-images/" + path, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY, "Content-Type": file.type || "application/octet-stream" },
+        body: file
+      }).then(function (res) {
+        if (!res.ok) throw new Error("No se pudo subir la imagen");
+        return SUPABASE_URL + "/storage/v1/object/public/product-images/" + path;
+      });
     },
 
     getCart: function () { return read(CART_KEY, []); },
@@ -195,8 +280,15 @@
       this.saveAnalytics(a);
     },
 
-    getSettings: function () { return Object.assign({}, DEFAULT_SETTINGS, read(SETTINGS_KEY, {})); },
-    saveSettings: function (s) { write(SETTINGS_KEY, s); },
+    getSettings: function () { return settingsCache || DEFAULT_SETTINGS; },
+    saveSettings: function (s) {
+      settingsCache = Object.assign({}, DEFAULT_SETTINGS, s);
+      write(SETTINGS_KEY, settingsCache);
+      if (SUPABASE_ENABLED) {
+        fetch(sbRest("settings?id=eq." + SETTINGS_ROW_ID), { method: "PATCH", headers: sbHeaders({ Prefer: "return=minimal" }), body: JSON.stringify({ value: settingsCache }) })
+          .catch(function (e) { console.error("No se pudieron guardar los ajustes en la base de datos:", e); });
+      }
+    },
 
     getOrders: function () { return read(ORDERS_KEY, []); },
     addOrder: function (order) {
@@ -206,12 +298,11 @@
       orders.unshift(order);
       write(ORDERS_KEY, orders);
       var self = this;
-      var list = self.getProducts();
       order.items.forEach(function (item) {
         self.recordPurchase(item.id, item.qty);
-        list.forEach(function (p) { if (p.id === item.id) p.stock = Math.max(0, p.stock - item.qty); });
+        var product = self.getProduct(item.id);
+        if (product) self.updateProduct(item.id, { stock: Math.max(0, product.stock - item.qty) });
       });
-      self.saveProducts(list);
       return order;
     },
 
