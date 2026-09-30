@@ -17,9 +17,9 @@ const applyTrack = () => track.style.setProperty('--track-screens', config.track
 applyTrack();
 
 let updateDev = () => {};
-const scene = await createPhoneScene({
+const sceneOpts = (url) => ({
   canvas: document.getElementById('phone-canvas'),
-  modelUrl, modelRotationY, config,
+  modelUrl: url, modelRotationY, config,
   onPose(p, cur) {
     title.style.opacity = p.textOpacity;
     title.style.transform = `translateY(${(1 - p.textOpacity) * -30}px)`;
@@ -27,6 +27,12 @@ const scene = await createPhoneScene({
     updateDev(cur, p.rotY);
   },
 });
+let scene;
+try { scene = await createPhoneScene(sceneOpts(modelUrl)); }
+catch (err) { // si el GLB falla, usa el teléfono procedural para que la demo siga funcionando
+  console.error('No se pudo cargar el modelo:', err);
+  scene = await createPhoneScene(sceneOpts(null));
+}
 
 const sync = () => scene.setProgress(getTrackProgress(track));
 addEventListener('scroll', sync, { passive: true });

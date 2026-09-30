@@ -9,7 +9,7 @@ const ENV_INTENSITY = 0.6; // reflejos del entorno sobre el modelo
 
 export async function loadPhone(url, { rotationY = 0 } = {}) {
   if (!url) return createProceduralPhone();
-  const gltf = await new GLTFLoader().loadAsync(url);
+  const gltf = await loadGLTF(url);
   const root = gltf.scene;
   // Look "negro espacial": oscurece la base y modera reflejos del entorno
   root.traverse((o) => {
@@ -29,6 +29,20 @@ export async function loadPhone(url, { rotationY = 0 } = {}) {
   wrapper.rotation.y = rotationY; // corrige modelos que miran hacia -Z
   const g = new THREE.Group(); g.add(wrapper);
   return g;
+}
+
+// Los data: URL se decodifican a mano (sin fetch, que algunos entornos bloquean).
+// Se evita ImageBitmapLoader (usa fetch de blob:) para que las texturas carguen con <img>.
+async function loadGLTF(url) {
+  const loader = new GLTFLoader();
+  if (!url.startsWith('data:')) return loader.loadAsync(url);
+  const bin = atob(url.slice(url.indexOf(',') + 1));
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  const cib = window.createImageBitmap;
+  window.createImageBitmap = undefined;
+  try { return await loader.parseAsync(buf.buffer, ''); }
+  finally { window.createImageBitmap = cib; }
 }
 
 function roundedRect(w, h, r) {
