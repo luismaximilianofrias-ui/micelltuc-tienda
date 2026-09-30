@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo Smartphone 3D · Scroll</title>
+<link rel="stylesheet" href="css/styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<!-- ===== SECCIÓN DE ANIMACIÓN (extraíble): #phone-track + js/phone-scene.js + js/scroll-timeline.js ===== -->
+<section id="phone-track">
+  <div class="phone-stage">
+    <div class="phone-glow"></div>
+    <canvas id="phone-canvas"></canvas>
+    <h1 class="hero-title">TECNOLOGÍA QUE<br>SE SIENTE DIFERENTE</h1>
+    <div class="scroll-hint">Scroll<span></span></div>
+  </div>
+</section>
+<!-- ===== FIN SECCIÓN DE ANIMACIÓN ===== -->
+
+<section class="demo-content">
+  <h2>Contenido de prueba</h2>
+  <p>Esta sección simula el resto de la tienda. Volvé a subir para ver el recorrido inverso del teléfono.</p>
+  <div class="cards">
+    <div class="card">Celulares</div><div class="card">Accesorios</div><div class="card">Audio</div>
+  </div>
+</section>
+<section class="demo-final"><h2>FINAL</h2><p>Fin de la demo.</p></section>
+
+<!-- Panel de desarrollo (temporal) -->
+<aside id="dev-panel" class="collapsed"></aside>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
