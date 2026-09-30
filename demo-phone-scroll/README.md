@@ -2,7 +2,11 @@
 
 Prototipo independiente (no toca la tienda). Three.js + JS puro, sin build.
 
-## Ejecutar
+## Ejecutar (la forma más fácil)
+Abrir **`demo-standalone.html`** con doble clic en Chrome/Edge. Es un solo archivo, sin servidor ni internet.
+Se regenera con `node build-standalone.mjs` (requiere `npm i esbuild`).
+
+## Ejecutar la versión modular (para desarrollo)
 Los módulos ES requieren servidor local (no funciona con doble clic):
 
     cd demo-phone-scroll
