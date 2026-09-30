@@ -4,19 +4,21 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const PHONE_HEIGHT = 3.2; // altura normalizada en unidades de escena
-const BLACK_TINT = 0.3;    // 1 = colores originales del GLB, 0 = negro puro
-const ENV_INTENSITY = 0.6; // reflejos del entorno sobre el modelo
+const BLACK_TINT = 1;      // 1 = colores originales del GLB, 0 = negro puro
+const ENV_INTENSITY = 1.0; // reflejos del entorno sobre el modelo
 
 export async function loadPhone(url, { rotationY = 0 } = {}) {
   if (!url) return createProceduralPhone();
   const gltf = await loadGLTF(url);
   const root = gltf.scene;
-  // Look "negro espacial": oscurece la base y modera reflejos del entorno
+  // Ajuste de materiales del GLB (tinte y reflejos)
   root.traverse((o) => {
     if (!o.isMesh) return;
     const m = o.material;
     m.color?.setScalar(BLACK_TINT);
     m.envMapIntensity = ENV_INTENSITY;
+    // El GLB viene con alphaMode BLEND: sin esto se ven las cámaras traseras a través de la pantalla
+    m.transparent = false; m.alphaTest = 0; m.depthWrite = true; m.opacity = 1;
     m.needsUpdate = true;
   });
   const box = new THREE.Box3().setFromObject(root);
