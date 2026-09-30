@@ -4,7 +4,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { loadPhone } from './phone-model.js';
 import { computePose } from './scroll-timeline.js';
 
-export async function createPhoneScene({ canvas, modelUrl, config, onPose }) {
+export async function createPhoneScene({ canvas, modelUrl, modelRotationY = 0, config, onPose }) {
   const isMobile = matchMedia('(max-width: 768px)').matches || matchMedia('(pointer: coarse)').matches;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: true, powerPreference: 'high-performance' });
@@ -37,7 +37,7 @@ export async function createPhoneScene({ canvas, modelUrl, config, onPose }) {
   scene.add(particles);
 
   const pivot = new THREE.Group(); scene.add(pivot);
-  const phone = await loadPhone(modelUrl); pivot.add(phone);
+  const phone = await loadPhone(modelUrl, { rotationY: modelRotationY }); pivot.add(phone);
 
   let target = 0, current = 0, raf = 0, baseScale = 1, dirty = true;
   const applyLights = () => lights.forEach(([l, i]) => (l.intensity = i * config.lightIntensity));

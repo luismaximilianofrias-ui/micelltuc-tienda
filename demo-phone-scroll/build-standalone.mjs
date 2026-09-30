@@ -6,7 +6,8 @@ const r = await build({
   entryPoints: ['js/main.js'], bundle: true, minify: true, format: 'esm', write: false, target: 'es2022',
   alias: { three: './vendor/three/build/three.module.js', 'three/addons': './vendor/three/examples/jsm' },
 });
-const js = r.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
+const glb = 'data:model/gltf-binary;base64,' + readFileSync('models/iphone_14_pro.glb').toString('base64');
+const js = `window.__PHONE_GLB__=${JSON.stringify(glb)};` + r.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 let html = readFileSync('index.html', 'utf8');
 html = html.replace(/<script type="importmap">[\s\S]*?<\/script>/, '')
   .replace('<link rel="stylesheet" href="css/styles.css">', `<style>${readFileSync('css/styles.css', 'utf8')}</style>`)

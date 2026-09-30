@@ -1,14 +1,24 @@
 // Fábrica del modelo. Para cambiar de teléfono: loadPhone('models/mi-telefono.glb')
-// (o abrir la demo con ?model=models/mi-telefono.glb). El modelo debe mirar hacia +Z.
+// (o abrir la demo con ?model=models/mi-telefono.glb). Debe mirar hacia +Z (si no, usar rotationY / ?rot=180). Las animaciones internas del GLB se ignoran.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const PHONE_HEIGHT = 3.2; // altura normalizada en unidades de escena
+const BLACK_TINT = 0.3;    // 1 = colores originales del GLB, 0 = negro puro
+const ENV_INTENSITY = 0.6; // reflejos del entorno sobre el modelo
 
-export async function loadPhone(url) {
+export async function loadPhone(url, { rotationY = 0 } = {}) {
   if (!url) return createProceduralPhone();
   const gltf = await new GLTFLoader().loadAsync(url);
   const root = gltf.scene;
+  // Look "negro espacial": oscurece la base y modera reflejos del entorno
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material;
+    m.color?.setScalar(BLACK_TINT);
+    m.envMapIntensity = ENV_INTENSITY;
+    m.needsUpdate = true;
+  });
   const box = new THREE.Box3().setFromObject(root);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
@@ -16,6 +26,7 @@ export async function loadPhone(url) {
   const wrapper = new THREE.Group();
   wrapper.add(root);
   wrapper.scale.setScalar(PHONE_HEIGHT / Math.max(size.x, size.y, size.z));
+  wrapper.rotation.y = rotationY; // corrige modelos que miran hacia -Z
   const g = new THREE.Group(); g.add(wrapper);
   return g;
 }
